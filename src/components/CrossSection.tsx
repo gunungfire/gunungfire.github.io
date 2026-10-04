@@ -195,7 +195,7 @@ export const CrossSection = memo(function CrossSection({
           const x1 = x(Math.max(s.fromKm, -LEFT_PX / scale.pxX))
           const x2 = x(Math.min(s.toKm, line.spanKm))
           return (
-            <g key={i}>
+            <g key={`${volcano.id}:${i}`} className="xsec__cloud">
               <rect
                 className="xsec__ash"
                 x={x1}

@@ -1,16 +1,13 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { RIDGE_SCROLL_FROM, ridgeSummary, type RidgeItem } from '../data/ridge'
 import { formatNumber } from '../lib/format'
+import { GLYPH_BASE_Y, GLYPH_H, GLYPH_W, ridgeGlyph } from '../lib/ridgeGlyph'
 
 interface Props {
   items: RidgeItem[]
   selectedId: string
   onSelect: (id: string) => void
 }
-
-/** Tinggi kerucut tertinggi dalam satuan viewBox; yang lain berskala terhadapnya. */
-const PEAK = 34
-const BASE_Y = 44
 
 const ASH_TEXT: Record<RidgeItem['ash'], string> = {
   ada: 'ada peringatan abu',
@@ -106,9 +103,7 @@ export const Ridge = memo(function Ridge({ items, selectedId, onSelect }: Props)
           aria-label="Gunung yang dipantau, urut dari barat ke timur"
         >
           {items.map((v) => {
-            const h = Math.max(1.5, (v.elevationM / maxM) * PEAK)
-            const half = 9 + h * 0.35
-            const top = BASE_Y - h
+            const glyph = ridgeGlyph(v.elevationM, maxM)
             const selected = v.id === selectedId
             return (
               <li key={v.id} className="ridge__item">
@@ -119,18 +114,15 @@ export const Ridge = memo(function Ridge({ items, selectedId, onSelect }: Props)
                   aria-label={`${v.name}, ${formatNumber(v.elevationM)} m, ${ASH_TEXT[v.ash]}`}
                   onClick={() => onSelect(v.id)}
                 >
-                  <svg className="ridge__svg" viewBox="0 0 64 48" aria-hidden="true" focusable="false">
-                    {v.ash === 'ada' && (
-                      <path
-                        className="ridge__puff"
-                        d={`M32 ${top - 1} C30 ${top - 6} 23 ${top - 7} 24 ${top - 11} C25 ${top - 15} 37 ${top - 15} 38 ${top - 11} C39 ${top - 7} 34 ${top - 6} 32 ${top - 1}Z`}
-                      />
-                    )}
-                    <path
-                      className="ridge__cone"
-                      d={`M${32 - half} ${BASE_Y} Q${32 - half * 0.35} ${BASE_Y - h * 0.25} ${30.5} ${top} L${33.5} ${top} Q${32 + half * 0.35} ${BASE_Y - h * 0.25} ${32 + half} ${BASE_Y}Z`}
-                    />
-                    <line className="ridge__ground" x1="0" x2="64" y1={BASE_Y} y2={BASE_Y} />
+                  <svg
+                    className="ridge__svg"
+                    viewBox={`0 0 ${GLYPH_W} ${GLYPH_H}`}
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    {v.ash === 'ada' && <path className="ridge__puff" d={glyph.puff} />}
+                    <path className="ridge__cone" d={glyph.cone} />
+                    <line className="ridge__ground" x1="0" x2={GLYPH_W} y1={GLYPH_BASE_Y} y2={GLYPH_BASE_Y} />
                   </svg>
                   {scroll && <span className="ridge__n">{v.shortName}</span>}
                 </button>

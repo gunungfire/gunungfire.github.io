@@ -662,15 +662,40 @@ button {
   flex-direction: column;
 }
 
+/* Gestur sentuh lembar ditangani skrip (lihat BottomSheet): gagang dan tab
+   tidak punya gulir sendiri, dan selama lembar belum penuh, tarikan tegak di
+   isinya menggerakkan lembar — bukan menggulir isi di balik setengah layar.
+   Begitu penuh, gulir tegak dikembalikan ke peramban; geser mendatar tetap
+   milik skrip untuk berpindah tab. */
+.sheetpanel {
+  overflow: hidden;
+  overflow: clip;
+}
+
+.sheetpanel:not(.sheetpanel--side) .sheetpanel__head {
+  touch-action: none;
+}
+
+.sheetpanel:not(.sheetpanel--side) .sheetpanel__scroll {
+  touch-action: none;
+}
+
+.sheetpanel[data-full] .sheetpanel__scroll,
+.sheetpanel--side .sheetpanel__scroll {
+  touch-action: pan-y;
+}
+
 /* Navigasi di dalam lembar. */
 
 .snav {
+  --snav-pad: var(--s-3);
+  position: relative;
   /* Bilah tab seperti kepala lembar rekaman: label berhuruf kapital rapat,
      bagian aktif ditandai garis berwarna aksen di dasarnya. Lima pil penuh
      warna dulu bersaing dengan kartu peringatan di bawahnya untuk perhatian
      yang sama; garis tipis cukup untuk menandai di mana kita berada. */
   display: flex;
-  padding: var(--s-1) var(--s-3) 0;
+  padding: var(--s-1) var(--snav-pad) 0;
   border-bottom: 1px solid var(--c-line);
 }
 
@@ -705,8 +730,7 @@ button {
    dirapatkan sedikit hanya di sana. */
 @media (max-width: 359px) {
   .snav {
-    padding-left: var(--s-2);
-    padding-right: var(--s-2);
+    --snav-pad: var(--s-2);
   }
 
   .snav__btn {
@@ -714,13 +738,21 @@ button {
   }
 }
 
-.snav__btn--on::after {
+.snav__ink {
+  position: absolute;
+  bottom: 0;
+  left: var(--snav-pad);
+  width: calc((100% - 2 * var(--snav-pad)) / var(--snav-n, 2));
+  height: 3px;
+  transform: translateX(calc(var(--snav-i, 0) * 100%));
+  transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+  pointer-events: none;
+}
+
+.snav__ink::after {
   content: '';
   position: absolute;
-  left: 16%;
-  right: 16%;
-  bottom: 0;
-  height: 3px;
+  inset: 0 16%;
   border-radius: 3px 3px 0 0;
   background: var(--lv);
 }
@@ -4229,4 +4261,74 @@ a.row__tel:hover {
   font-size: 13px;
   font-weight: 700;
   box-shadow: 0 0 0 2px var(--c-page);
+}
+
+/* ---------- gerak: hanya transform dan opacity ----------
+   Semua animasi di sini dikerjakan kompositor — tidak ada yang memicu hitung
+   ulang tata letak — dan hanya hidup bila pengguna tidak meminta gerak
+   dikurangi. Masing-masing memberi tahu sesuatu: apa yang baru berubah, ke
+   mana isi berpindah, atau bahwa ketukan diterima. */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Jawaban baru (gunung lain, atau statusnya berubah) naik ke tempatnya. */
+  .verdict {
+    animation: riseIn 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  /* Awan abu yang baru muncul memudar masuk, tidak meloncat. */
+  .xsec__cloud {
+    animation: fadeIn 0.5s ease-out both;
+  }
+
+  /* Bagian Info yang dibuka turun sedikit dari judulnya. */
+  .isec__body {
+    animation: dropIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  /* Langkah tindakan muncul berurutan — terbaca sebagai daftar urut. */
+  .stact__steps li {
+    animation: riseIn 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation-delay: calc(var(--step, 0) * 45ms);
+  }
+
+  /* Ketukan diterima: tombol sedikit mengecil di bawah jari. */
+  .ridge__svg,
+  .stact__btn,
+  .qfact--tap {
+    transition: transform 0.12s ease-out;
+  }
+
+  .ridge__v:active .ridge__svg {
+    transform: scale(0.9);
+  }
+
+  .stact__btn:active,
+  .qfact--tap:active {
+    transform: scale(0.98);
+  }
+}
+
+.isec__btn:active,
+.stact__more:active {
+  opacity: 0.7;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dropIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }

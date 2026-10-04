@@ -102,6 +102,7 @@ export const SeismicStrip = memo(function SeismicStrip({ hourly, sample, replayK
       <svg
         ref={svgRef}
         className="seisstrip__svg"
+        data-no-swipe
         viewBox={`0 0 ${W} ${H}`}
         preserveAspectRatio="none"
         role="img"

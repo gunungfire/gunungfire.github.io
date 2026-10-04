@@ -62,7 +62,9 @@ export function StatusTab({
   return (
     <div className={`stview stview--${aviation.id}`}>
       <div className={`stsky stsky--${aviation.id}`}>
-        <div className="verdict">
+        {/* Kunci berganti saat gunung atau statusnya berganti, sehingga
+            jawaban baru diputar masuk — data yang sama tidak beranimasi ulang. */}
+        <div className="verdict" key={`${snapshot.volcano.id}:${aviation.id}:${fresh}`}>
           <div className="verdict__k">Abu di jalur terbang</div>
           <p className="verdict__v" style={{ color: wordColor }}>
             {word}
@@ -123,8 +125,8 @@ export function StatusTab({
         </button>
         {stepsOpen && (
           <ol className="stact__steps">
-            {snapshot.quickActions.map((item) => (
-              <li key={item.n}>
+            {snapshot.quickActions.map((item, i) => (
+              <li key={item.n} style={{ '--step': i } as React.CSSProperties}>
                 <span className="mono">{item.n}</span>
                 {item.text}
               </li>

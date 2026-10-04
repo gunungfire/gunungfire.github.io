@@ -5,7 +5,7 @@ import { DataStateBanner } from './components/DataStateBanner'
 import { DemoPanel } from './components/DemoPanel'
 import { FloatingHeader } from './components/FloatingHeader'
 import { MapControls } from './components/MapControls'
-import { SheetNav, type TabId } from './components/SheetNav'
+import { SheetNav, TAB_ORDER, type TabId } from './components/SheetNav'
 import { UpdateBanner } from './components/UpdateBanner'
 import { VolcanoMap } from './components/VolcanoMap'
 import { NotificationSheet } from './components/sheets/NotificationSheet'
@@ -194,6 +194,13 @@ export default function App() {
     setSnap((s) => Math.max(s, 1))
   }, [])
 
+  // Geser mendatar berpindah tab tanpa mengubah tinggi lembar: orang yang
+  // menggeser sedang membaca, dan lembarnya sudah setinggi yang ia mau.
+  const swipeToTab = useCallback((index: number) => {
+    const next = TAB_ORDER[index]
+    if (next) setTab(next)
+  }, [])
+
   /** Buka tab Info, dan bila diminta, langsung ke satu bagiannya. */
   const openInfo = useCallback((section?: InfoSectionId) => {
     setTab('info')
@@ -279,6 +286,9 @@ export default function App() {
         onSnapChange={setSnap}
         scrollKey={tab}
         topGap={headBottom + CHROME_GAP}
+        page={TAB_ORDER.indexOf(tab)}
+        pageCount={TAB_ORDER.length}
+        onPage={swipeToTab}
         header={<SheetNav tab={tab} onChange={changeTab} />}
       >
         {tab === 'status' ? (
