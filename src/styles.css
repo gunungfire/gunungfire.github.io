@@ -28,6 +28,16 @@
   --t-xl: 30px;
   --t-2xl: 44px;
 
+  /*
+   * Tiga keluarga huruf, semuanya IBM Plex. Condensed hanya untuk angka besar
+   * dan kata status: bentuknya yang rapat membuat angka terbaca seperti
+   * penunjuk alat ukur, dan memuat lebih banyak di lebar ponsel yang sempit.
+   */
+  --f-sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+  --f-display: 'IBM Plex Sans Condensed', 'IBM Plex Sans', 'Arial Narrow',
+    system-ui, sans-serif;
+
   /* Radius: dari 15 nilai jadi lima tingkat dan satu bentuk pil. */
   --r-xs: 4px;
   --r-sm: 8px;
@@ -196,7 +206,7 @@ body {
   margin: 0;
   background: var(--c-page);
   color: var(--c-text);
-  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  font-family: var(--f-sans);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -226,7 +236,7 @@ button {
 }
 
 .mono {
-  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+  font-family: var(--f-mono);
 }
 
 .dim {
@@ -408,9 +418,11 @@ button {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: var(--t-sm);
+  font-family: var(--f-display);
+  font-size: var(--t-md);
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.005em;
+  line-height: 1.15;
 }
 
 .fhead__caret {
@@ -628,30 +640,64 @@ button {
 /* Navigasi di dalam lembar. */
 
 .snav {
+  /* Bilah tab seperti kepala lembar rekaman: label berhuruf kapital rapat,
+     bagian aktif ditandai garis berwarna aksen di dasarnya. Lima pil penuh
+     warna dulu bersaing dengan kartu peringatan di bawahnya untuk perhatian
+     yang sama; garis tipis cukup untuk menandai di mana kita berada. */
   display: flex;
-  gap: var(--s-1);
-  padding: var(--s-1) var(--s-3) 10px;
+  padding: var(--s-1) var(--s-3) 0;
+  border-bottom: 1px solid var(--c-line);
 }
 
 .snav__btn {
   flex: 1;
   min-width: 0;
+  position: relative;
   text-align: center;
-  font-size: var(--t-2xs);
+  font-size: var(--t-3xs);
   font-weight: 600;
-  padding: 9px 4px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 11px 2px 12px;
   min-height: var(--tap);
-  border-radius: var(--r-md);
-  background: var(--c-hairline);
   color: var(--c-text-3);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: color 0.15s ease;
+}
+
+.snav__btn:hover {
+  color: var(--c-text-2);
 }
 
 .snav__btn--on {
+  color: var(--c-text);
+}
+
+/* Di layar 320 px, huruf kapital berjarak membuat "PANDUAN" kurang dua
+   piksel dan terpotong jadi "PANDUA…". Jarak huruf dan tepi bilah
+   dirapatkan sedikit hanya di sana. */
+@media (max-width: 359px) {
+  .snav {
+    padding-left: var(--s-2);
+    padding-right: var(--s-2);
+  }
+
+  .snav__btn {
+    letter-spacing: 0.03em;
+  }
+}
+
+.snav__btn--on::after {
+  content: '';
+  position: absolute;
+  left: 16%;
+  right: 16%;
+  bottom: 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
   background: var(--lv);
-  color: var(--c-on-accent);
 }
 
 .layercard {
@@ -678,16 +724,36 @@ button {
 /* ---------- shared bits ---------- */
 
 .section {
-  /* Garis rambut di kiri membuat judul bagian jadi tengara yang bisa dipindai
-     dengan sekali lihat, tanpa menambah berat tipografinya. */
+  /* Judul bagian dibaca seperti sumbu grafik alat ukur: penanda pendek
+     berwarna aksen di depan, garis yang memudar di belakang. Penandanya ikut
+     warna peringatan abu, jadi keadaan bahaya terasa di setiap tab, bukan
+     hanya di kartu utama. */
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-size: var(--t-sm);
   font-weight: 700;
   letter-spacing: 0.01em;
   color: var(--c-text);
-  margin: 26px 0 10px;
-  padding-left: 10px;
-  border-left: 2px solid var(--c-line-3);
+  margin: 28px 0 12px;
   line-height: 1.35;
+}
+
+.section::before {
+  content: '';
+  flex: none;
+  width: 4px;
+  height: 14px;
+  border-radius: 1px;
+  background: var(--lv);
+}
+
+.section::after {
+  content: '';
+  flex: 1;
+  min-width: 16px;
+  height: 1px;
+  background: linear-gradient(to right, var(--c-line-3), transparent);
 }
 
 .section--first {
@@ -742,20 +808,31 @@ button {
   overflow: hidden;
 }
 
-.avcard__glow {
+.avcard__contours {
+  /* Kontur dipotong di sudut kanan atas, puncaknya di luar kartu: tekstur,
+     bukan peta. Lihat lib/contours.ts kenapa bentuknya sengaja tetap. */
   position: absolute;
-  right: -40px;
-  top: -40px;
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  background: var(--lv);
-  opacity: 0.09;
+  right: -92px;
+  top: -104px;
+  width: 290px;
+  height: 290px;
+  color: var(--lv);
+  opacity: 0.26;
+  pointer-events: none;
+}
+
+/* Isi kartu berada di atas tekstur. Elemen yang diposisikan digambar sesuai
+   urutan DOM, jadi semua anak sesudah kontur ikut naik ke atasnya. */
+.avcard > :not(.avcard__contours) {
+  position: relative;
 }
 
 .avcard__label {
-  font-size: var(--t-sm);
-  font-weight: 600;
+  font-family: var(--f-mono);
+  font-size: var(--t-3xs);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--c-text-2);
 }
 
@@ -767,10 +844,11 @@ button {
 }
 
 .avcard__name {
+  font-family: var(--f-display);
   font-size: var(--t-2xl);
   font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 0.95;
+  letter-spacing: -0.005em;
+  line-height: 0.92;
   color: var(--lv);
 }
 
@@ -2484,16 +2562,13 @@ a.row__tel:hover {
 /* --- Tablet: lembar tetap di bawah, isinya lebih lega ------------------- */
 
 @media (min-width: 700px) {
-  .sumstrip {
-    grid-template-columns: repeat(4, 1fr);
-  }
 
   .sheetpanel__scroll {
     padding: 0 var(--s-5) 32px;
   }
 
   .snav {
-    padding: var(--s-1) var(--s-5) 10px;
+    padding: var(--s-1) var(--s-5) 0;
   }
 
   .sheet__panel {
@@ -2556,7 +2631,7 @@ a.row__tel:hover {
   }
 
   .snav {
-    padding: var(--s-1) var(--s-4) 10px;
+    padding: var(--s-1) var(--s-4) 0;
   }
 
   .demo,
@@ -3072,50 +3147,170 @@ a.row__tel:hover {
 /* ---------- ringkasan empat angka ---------- */
 
 .sumstrip {
+  /* Satu panel instrumen, bukan empat kartu lepas: sel dipisah garis rambut
+     seperti muka alat ukur. Empat kartu bulat dulu terbaca sebagai empat hal
+     yang setara dan tak berhubungan; ini satu bacaan keadaan. */
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-top: 16px;
-}
-
-.sumtile {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 11px 12px;
   border: 1px solid var(--c-line);
   border-radius: var(--r-md);
   background: var(--c-card);
+  overflow: hidden;
+}
+
+.sumtile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px 13px 16px;
   text-align: left;
   min-width: 0;
+  border-right: 1px solid var(--c-line);
+  border-bottom: 1px solid var(--c-line);
+}
+
+.sumtile:nth-child(2n) {
+  border-right: 0;
+}
+
+.sumtile:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+/* Garis kanal: warnanya warna keadaan angka itu, abu-abu bila belum terbaca. */
+.sumtile::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 14px;
+  bottom: 14px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--ch, var(--c-line-2));
 }
 
 .sumtile--tap {
   cursor: pointer;
+  transition: background 0.15s ease;
 }
 
 .sumtile--tap:hover {
-  border-color: var(--c-line-3);
+  background: var(--c-hairline);
 }
 
 .sumtile__k {
+  font-family: var(--f-mono);
   font-size: var(--t-3xs);
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
   color: var(--c-text-3);
   line-height: 1.3;
 }
 
 .sumtile__v {
-  font-size: var(--t-lg);
-  font-weight: 600;
-  line-height: 1.1;
-  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  font-family: var(--f-display);
+  font-size: var(--t-xl);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.005em;
+  font-variant-numeric: tabular-nums;
   color: var(--c-text);
+  margin-top: 2px;
+}
+
+.sumtile__v .samptag {
+  margin-left: 0;
+  font-family: var(--f-sans);
 }
 
 .sumtile__u {
   font-size: var(--t-3xs);
   color: var(--c-text-4);
   line-height: 1.35;
+}
+
+/*
+ * Tablet: lembar masih selebar layar, jadi keempat angka muat sebaris.
+ * Aturan ini harus ditulis SESUDAH aturan dasar .sumstrip di atas. Dulu ia
+ * berada di blok @media tablet yang letaknya ratusan baris lebih awal, dan
+ * aturan dasar yang belakangan — spesifisitasnya sama — selalu menimpanya:
+ * empat kolom untuk tablet tidak pernah berlaku sekali pun.
+ *
+ * Mulai 1000 px lembar berubah jadi panel samping selebar ±420 px, dan di
+ * sana 2 x 2 memang lebih pas, jadi rentangnya dibatasi.
+ */
+@media (min-width: 700px) and (max-width: 999px) {
+  .sumstrip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .sumtile,
+  .sumtile:nth-child(2n),
+  .sumtile:nth-last-child(-n + 2) {
+    border-right: 1px solid var(--c-line);
+    border-bottom: 0;
+  }
+
+  .sumtile:last-child {
+    border-right: 0;
+  }
+}
+
+/* ---------- jejak seismogram ---------- */
+
+.strace {
+  display: block;
+  width: 100%;
+  height: 26px;
+  margin-top: 6px;
+  overflow: visible;
+}
+
+.strace__base {
+  stroke: var(--c-line-2);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.strace__line {
+  fill: none;
+  stroke: var(--lv);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Data contoh digambar putus-putus dan abu-abu: bentuknya masih terlihat,
+   tapi tidak mungkin tertukar dengan rekaman sungguhan. */
+.strace--sample .strace__line {
+  stroke: var(--c-text-4);
+  stroke-dasharray: 3 3;
+}
+
+/* ---------- kontur ---------- */
+
+.contours {
+  display: block;
+  overflow: visible;
+}
+
+/* Angka penunjuk lain ikut huruf display yang sama, supaya setiap bacaan
+   alat ukur di app ini terlihat sekeluarga. Aturan ini sengaja ditaruh
+   sesudah .mono: kelas itu juga terpasang pada ketiganya, dan yang belakangan
+   menang. */
+.aqcard__aqi,
+.poscard__km,
+.natash__n {
+  font-family: var(--f-display);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ---------- catatan yang dilipat ---------- */

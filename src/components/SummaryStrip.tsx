@@ -4,6 +4,8 @@ import type { GeolocationState } from '../hooks/useGeolocation'
 import { distanceKm } from '../lib/geo'
 import { SEVERITY_COLOR } from '../theme'
 import type { VolcanoSnapshot } from '../types'
+import { SampleTag } from './SampleTag'
+import { Seismotrace } from './Seismotrace'
 
 interface Props {
   snapshot: VolcanoSnapshot
@@ -19,6 +21,8 @@ interface Tile {
   value: string
   unit: string | null
   color: string | undefined
+  sample?: boolean
+  extra?: React.ReactNode
   onClick?: () => void
 }
 
@@ -44,6 +48,10 @@ export function SummaryStrip({
   const aqi = snapshot.air?.aqi ?? null
   const band = aqi === null ? null : aqiBand(aqi)
   const quakes24 = snapshot.seismicHourly.reduce((a, b) => a + b, 0)
+  // Tanpa katalog gempa, deret per jamnya adalah data contoh. Dulu jumlahnya
+  // tetap tampil di sini sebagai "356 di sekitar gunung" tanpa penanda apa
+  // pun — angka karangan yang terbaca seperti pengamatan.
+  const seismicSample = snapshot.provenance.seismic === 'sample'
 
   const advisoryCount = snapshot.ashAdvisories?.filter(
     (a) => a.namedHere && a.validity !== 'lewat',
@@ -87,21 +95,32 @@ export function SummaryStrip({
       key: 'gempa',
       label: 'Gempa 24 jam',
       value: String(quakes24),
-      unit: 'di sekitar gunung',
+      unit: seismicSample ? 'belum tersambung' : 'di sekitar gunung',
       color: undefined,
+      sample: seismicSample,
+      extra: (
+        <Seismotrace hourly={snapshot.seismicHourly} sample={seismicSample} />
+      ),
     },
   ]
 
   return (
     <section className="sumstrip" aria-label="Ringkasan keadaan">
       {tiles.map((t) => {
+        // Garis kanal di tepi kiri mengikuti warna keadaan angkanya; angka yang
+        // belum terbaca tidak diberi warna apa pun.
+        const style = t.color
+          ? ({ '--ch': t.color } as React.CSSProperties)
+          : undefined
         const body = (
           <>
             <span className="sumtile__k">{t.label}</span>
-            <span className="sumtile__v mono" style={{ color: t.color }}>
+            <span className="sumtile__v" style={{ color: t.color }}>
               {t.value}
+              {t.sample && <SampleTag />}
             </span>
             <span className="sumtile__u">{t.unit}</span>
+            {t.extra}
           </>
         )
         return t.onClick ? (
@@ -109,12 +128,13 @@ export function SummaryStrip({
             key={t.key}
             type="button"
             className="sumtile sumtile--tap"
+            style={style}
             onClick={t.onClick}
           >
             {body}
           </button>
         ) : (
-          <div className="sumtile" key={t.key}>
+          <div className="sumtile" key={t.key} style={style}>
             {body}
           </div>
         )

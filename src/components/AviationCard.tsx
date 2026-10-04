@@ -1,5 +1,6 @@
 import type { AviationStatus } from '../data/aviation'
 import type { DataStateView } from '../data/dataState'
+import { Contours } from './Contours'
 import { Why } from './Why'
 
 interface Props {
@@ -23,7 +24,7 @@ export function AviationCard({
 }: Props) {
   return (
     <section className="avcard">
-      <div className="avcard__glow" aria-hidden="true" />
+      <Contours className="avcard__contours" />
       <h2 className="avcard__label">Peringatan abu untuk penerbangan</h2>
       <div className="avcard__row">
         <div className="avcard__name">{status.name}</div>
