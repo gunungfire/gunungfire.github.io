@@ -1,4 +1,4 @@
-export type TabId = 'status' | 'wilayah' | 'udara' | 'laporan' | 'panduan'
+export type TabId = 'status' | 'info'
 
 interface NavItem {
   id: TabId
@@ -6,17 +6,13 @@ interface NavItem {
 }
 
 /**
- * Lima bagian. Prototipe hanya memuat empat — tab Udara tidak ada di sana —
- * tapi bagian itu membawa peringatan abu SIGMET, profil angin per ketinggian,
- * rekap nasional, dan bandara terdekat, semuanya sudah tersambung ke sumbernya.
- * Menghapusnya berarti membuang integrasi yang sudah bekerja.
+ * Dua bagian. Peta tidak perlu tab: ia selalu ada di belakang lembar, dan
+ * penampang di Status adalah irisannya. Isi empat tab lama — Wilayah, Udara,
+ * Laporan, Panduan — utuh di Info, terlipat dengan ringkasan satu baris.
  */
 const NAV: NavItem[] = [
   { id: 'status', label: 'Status' },
-  { id: 'wilayah', label: 'Wilayah' },
-  { id: 'udara', label: 'Udara' },
-  { id: 'laporan', label: 'Laporan' },
-  { id: 'panduan', label: 'Panduan' },
+  { id: 'info', label: 'Info' },
 ]
 
 interface Props {

@@ -1,18 +1,16 @@
+import { useMemo, useState } from 'react'
+import { aqiBand } from '../../data/aqi'
 import type { AviationStatus } from '../../data/aviation'
 import type { DataStateView } from '../../data/dataState'
-import { SampleTag } from '../SampleTag'
-import { formatAge } from '../../lib/format'
 import type { GeolocationState } from '../../hooks/useGeolocation'
-import type { LiveQuakesState } from '../../hooks/useLiveQuakes'
+import { formatAge } from '../../lib/format'
+import { distanceKm, zoneVerdict } from '../../lib/geo'
+import type { SectionLine } from '../../lib/section'
 import type { VolcanoLevel, VolcanoSnapshot } from '../../types'
-import { AirQualityCard } from '../AirQualityCard'
-import { AviationCard } from '../AviationCard'
-import { InstallPrompt } from '../InstallPrompt'
-import { LiveQuakeList } from '../LiveQuakeList'
-import { OfficialLevelCard } from '../OfficialLevelCard'
-import { PositionCard } from '../PositionCard'
-import { SeismicPanel } from '../SeismicPanel'
-import { SummaryStrip } from '../SummaryStrip'
+import { CrossSection } from '../CrossSection'
+import { QuickFacts } from '../QuickFacts'
+import { SeismicStrip } from '../SeismicStrip'
+import type { InfoSectionId } from '../../data/infoSummary'
 
 interface Props {
   snapshot: VolcanoSnapshot
@@ -20,141 +18,123 @@ interface Props {
   dataState: DataStateView
   aviation: AviationStatus
   geo: GeolocationState
-  liveQuakes: LiveQuakesState
-  selectedHour: number
-  notifSummary: string
-  onSelectHour: (index: number) => void
-  onGoGuide: () => void
-  onGoMap: () => void
-  onGoAviation: () => void
-  onOpenNotifications: () => void
+  section: SectionLine
+  onOpenInfo: (section?: InfoSectionId) => void
 }
 
+/**
+ * Layar pertama: satu jawaban, satu gambar, tiga angka, satu tindakan.
+ *
+ * Jawabannya ditulis di langit penampang, karena itulah yang ditanyakan orang
+ * pertama kali: ada abu atau tidak. Semua isi lain tetap ada di tab Info.
+ */
 export function StatusTab({
   snapshot,
   level,
   dataState,
   aviation,
   geo,
-  liveQuakes,
-  selectedHour,
-  notifSummary,
-  onSelectHour,
-  onGoGuide,
-  onGoMap,
-  onGoAviation,
-  onOpenNotifications,
+  section,
+  onOpenInfo,
 }: Props) {
-  const { ashfall } = snapshot
+  const [stepsOpen, setStepsOpen] = useState(false)
+  const fresh = dataState.id === 'fresh'
+
+  // Data yang tidak segar tidak boleh terdengar sepasti data segar: titik di
+  // akhir jawaban berganti tanda tanya.
+  const word = fresh ? aviation.verdict : aviation.verdict.replace(/\.$/, '?')
+  const wordColor = !fresh
+    ? 'var(--c-text-3)'
+    : aviation.id === 'clear'
+      ? 'var(--c-text)'
+      : aviation.colors.color
+
+  const position = useMemo(() => {
+    if (!geo.fix) return null
+    const km = distanceKm({ lat: geo.fix.lat, lon: geo.fix.lon }, snapshot.volcano)
+    return { km, verdict: zoneVerdict(km, level.radiusKm, geo.fix.accuracyM) }
+  }, [geo.fix, snapshot.volcano, level.radiusKm])
+
+  const aqi = snapshot.air?.aqi ?? null
+  const band = aqi === null ? null : aqiBand(aqi)
+  const seismicSample = snapshot.provenance.seismic === 'sample'
 
   return (
-    <div className="tabview">
-      <SummaryStrip
-        snapshot={snapshot}
-        aviation={aviation}
-        geo={geo}
-        onGoMap={onGoMap}
-        onGoAviation={onGoAviation}
+    <div className={`stview stview--${aviation.id}`}>
+      <div className={`stsky stsky--${aviation.id}`}>
+        <div className="verdict">
+          <div className="verdict__k">Abu di jalur terbang</div>
+          <p className="verdict__v" style={{ color: wordColor }}>
+            {word}
+          </p>
+          <p className="verdict__lede">{aviation.headline}</p>
+          {!fresh && (
+            <span className="verdict__stale">
+              {dataState.label} · {dataState.sourceTime}
+            </span>
+          )}
+        </div>
+
+        <CrossSection
+          volcano={snapshot.volcano}
+          line={section}
+          advisories={snapshot.ashAdvisories}
+          aviation={aviation.id}
+          radiusKm={level.radiusKm}
+        />
+      </div>
+
+      <SeismicStrip
+        hourly={snapshot.seismicHourly}
+        sample={seismicSample}
+        replayKey={snapshot.volcano.id}
       />
 
-      <AviationCard
-        status={aviation}
-        dataState={dataState}
-        advisoryCount={snapshot.ashAdvisories?.length ?? null}
-        onOpenAviation={onGoAviation}
-      />
-
-      <OfficialLevelCard level={level} />
-
-      <PositionCard
-        geo={geo}
-        volcano={snapshot.volcano}
-        level={level}
-        ashfall={snapshot.ashfall}
-        shelters={snapshot.shelters}
-        provenance={snapshot.provenance}
-        onShowShelters={onGoGuide}
-        onShowMap={onGoMap}
+      <QuickFacts
+        distanceKm={position?.km ?? null}
+        verdict={position?.verdict ?? null}
+        radiusKm={level.radiusKm}
+        geoStatus={geo.status}
+        onEnableLocation={geo.request}
+        aqi={aqi}
+        band={band}
+        onOpenLevel={() => onOpenInfo('level')}
       />
 
       {dataState.isFailed && (
-        <div className="failnote">
+        <div className="failnote stview__pad">
           <div className="failnote__t">Data terbaru gagal dimuat</div>
           <div className="failnote__n">
-            Yang tampil di bawah adalah catatan terakhir yang tersimpan,{' '}
+            Yang tampil adalah catatan terakhir yang tersimpan,{' '}
             {formatAge(dataState.ageMinutes)}. Jangan dijadikan dasar keputusan.
           </div>
         </div>
       )}
 
-      <h2 className="section">Kualitas udara di sekitar kawah</h2>
-      {snapshot.air ? (
-        <AirQualityCard air={snapshot.air} dataState={dataState} />
-      ) : (
-        <p className="emptynote">
-          Data kualitas udara untuk {snapshot.volcano.name} belum bisa dimuat.
-        </p>
-      )}
-
-      <h2 className="section">Abu vulkanik dan arah angin</h2>
-      <section className="ash dim">
-        <div className="ash__split">
-          <div className="ash__cell ash__cell--left">
-            <div className="ash__k">
-              Arah sebaran
-              {ashfall.windProvenance === 'sample' && <SampleTag />}
-            </div>
-            <div className="ash__v">{ashfall.windDirection}</div>
-            <div className="ash__d">angin {ashfall.windSpeedKmh} km/jam</div>
-          </div>
-          <div className="ash__cell">
-            <div className="ash__k">Puncak kolom abu</div>
-            <div className="ash__v ash__v--none">belum tersambung</div>
-            <div className="ash__d">hanya dari pos pengamatan PVMBG</div>
-          </div>
-        </div>
-        <p className="ash__advice">{ashfall.advice}</p>
-        <div className="ash__src">
-          Sumber: {ashfall.source} · {dataState.sourceTime}
-        </div>
-      </section>
-
-      <LiveQuakeList
-        live={liveQuakes}
-        volcano={snapshot.volcano}
-        nowISO={snapshot.fetchedAtISO}
-      />
-
-      <h2 className="section">Kegempaan tiap jam, 24 jam terakhir</h2>
-      <SeismicPanel
-        snapshot={snapshot}
-        dataState={dataState}
-        selectedHour={selectedHour}
-        onSelectHour={onSelectHour}
-      />
-
-      <h2 className="section">Tiga hal yang bisa dilakukan sekarang</h2>
-      <ol className="steps">
-        {snapshot.quickActions.map((item) => (
-          <li className="step" key={item.n}>
-            <span className="step__n mono">{item.n}</span>
-            <span className="step__t">{item.text}</span>
-          </li>
-        ))}
-      </ol>
-      <button type="button" className="linkrow" onClick={onGoGuide}>
-        Panduan lengkap dan titik kumpul →
-      </button>
-
-      <button type="button" className="notifrow" onClick={onOpenNotifications}>
-        <span className="notifrow__body">
-          <span className="notifrow__title">Notifikasi perubahan status</span>
-          <span className="notifrow__note">{notifSummary}</span>
-        </span>
-        <span className="notifrow__action">Atur</span>
-      </button>
-
-      <InstallPrompt />
+      <div className="stact">
+        <button
+          type="button"
+          className={`stact__btn stact__btn--${aviation.id}`}
+          aria-expanded={stepsOpen}
+          onClick={() => setStepsOpen((v) => !v)}
+        >
+          <span>Yang harus saya lakukan</span>
+          <span aria-hidden="true">{stepsOpen ? '↑' : '↓'}</span>
+        </button>
+        {stepsOpen && (
+          <ol className="stact__steps">
+            {snapshot.quickActions.map((item) => (
+              <li key={item.n}>
+                <span className="mono">{item.n}</span>
+                {item.text}
+              </li>
+            ))}
+          </ol>
+        )}
+        <button type="button" className="stact__more" onClick={() => onOpenInfo()}>
+          Semua info, panduan, dan sumber →
+        </button>
+      </div>
     </div>
   )
 }

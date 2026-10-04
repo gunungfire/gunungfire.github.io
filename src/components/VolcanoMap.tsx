@@ -66,6 +66,11 @@ interface Props {
   focus: 'gunung' | 'saya'
   /** Bukan untuk dibaca isinya — pemicu agar bentuk digambar ulang saat tema berganti. */
   tema: string
+  /**
+   * Garis penampang A–B: dari kawah ke posisi Anda, atau searah sebaran abu.
+   * Penampang di lembar adalah irisan sepanjang garis ini.
+   */
+  sectionEnd: { lat: number; lon: number }
 }
 
 /*
@@ -105,6 +110,8 @@ interface MapPalette {
   neutral: string
   /** Garis tepi penanda, supaya bentuk tetap punya batas di dua tema. */
   stroke: string
+  /** Garis penampang A–B; biru supaya tak tertukar dengan warna bahaya. */
+  section: string
   pager: Record<string, string>
 }
 
@@ -122,6 +129,7 @@ function readPalette(): MapPalette {
     sea: token('--c-sea', '#38bdf8'),
     neutral: token('--c-neutral', '#94a3b8'),
     stroke: token('--c-page', '#0d1117'),
+    section: token('--c-section', '#7aa2ff'),
     /** Warna PAGER USGS — satu-satunya penilaian dampak resmi yang kita punya. */
     pager: { green: safe, yellow: watch, orange: alert, red: danger },
   }
@@ -171,6 +179,7 @@ export function VolcanoMap({
   chrome,
   focus,
   tema,
+  sectionEnd,
 }: Props) {
   const hostRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<L.Map | null>(null)
@@ -247,6 +256,11 @@ export function VolcanoMap({
     L.control.zoom({ position: 'bottomright' }).addTo(map)
     // Skala metrik: satu-satunya cara pembaca menilai jarak sebenarnya.
     L.control.scale({ position: 'topleft', imperial: false }).addTo(map)
+    // Sudut bawah peta duduk di atas lembar geser; lembar memberinya tinggi
+    // langsung selama ditarik (lihat BottomSheet).
+    host
+      .querySelectorAll('.leaflet-bottom')
+      .forEach((corner) => corner.setAttribute('data-sheet-follow', ''))
 
     const remember = () => {
       if (!programmaticRef.current) userMovedRef.current = true
@@ -551,7 +565,6 @@ export function VolcanoMap({
       return
     }
 
-    const vent: L.LatLngExpression = [volcano.lat, volcano.lon]
     const me: L.LatLngExpression = [geo.fix.lat, geo.fix.lon]
     const km = distanceKm({ lat: geo.fix.lat, lon: geo.fix.lon }, volcano)
     add(
@@ -564,19 +577,7 @@ export function VolcanoMap({
         fillOpacity: 0.1,
       }),
     )
-    // Garis ke kawah membuat jarak di kartu Posisi bisa dilihat, bukan hanya
-    // dibaca sebagai angka.
-    add(
-      L.polyline([me, vent], {
-        color: pal.safe,
-        weight: 1.5,
-        opacity: 0.55,
-        dashArray: '4 6',
-      }).bindTooltip(`${km < 10 ? km.toFixed(1) : Math.round(km)} km ke kawah`, {
-        direction: 'center',
-        sticky: true,
-      }),
-    )
+    // Garis ke kawah kini garis penampang A–B, digambar di efeknya sendiri.
     add(
       L.circleMarker(me, {
         radius: 6,
@@ -602,6 +603,36 @@ export function VolcanoMap({
       fitToFocus(false)
     }
   }, [geo.fix, volcano.lat, volcano.lon, tema, fitToFocus])
+
+  /*
+   * Garis penampang A–B. Dibuat sekali, sesudah itu hanya digeser: GPS bergerak
+   * tiap beberapa detik, dan membangun ulang lapisannya tiap kali itu membuat
+   * garisnya berkedip. Label A dan B digeser sedikit dari titiknya supaya tidak
+   * menutupi penanda kawah dan penanda posisi Anda.
+   */
+  const sectionRef = useRef<{ line: L.Polyline; a: L.Marker; b: L.Marker } | null>(null)
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+    const color = readPalette().section
+    const vent: L.LatLngExpression = [volcano.lat, volcano.lon]
+    const end: L.LatLngExpression = [sectionEnd.lat, sectionEnd.lon]
+    const current = sectionRef.current
+    if (current) {
+      current.line.setLatLngs([vent, end])
+      current.line.setStyle({ color })
+      current.a.setLatLng(vent)
+      current.b.setLatLng(end)
+      return
+    }
+    const pin = (text: string, anchor: [number, number]) =>
+      L.divIcon({ className: 'secpin', html: text, iconSize: [22, 22], iconAnchor: anchor })
+    sectionRef.current = {
+      line: L.polyline([vent, end], { color, weight: 3, opacity: 0.9, interactive: false }).addTo(map),
+      a: L.marker(vent, { icon: pin('A', [30, 30]), interactive: false, keyboard: false }).addTo(map),
+      b: L.marker(end, { icon: pin('B', [-8, 30]), interactive: false, keyboard: false }).addTo(map),
+    }
+  }, [volcano.lat, volcano.lon, sectionEnd.lat, sectionEnd.lon, tema])
 
   // Memusatkan ke posisi pengguna tidak boleh menggambar ulang lapisan, jadi
   // dipisah dari efek di atas. Ini pilihan pengguna sendiri, jadi ikut dicatat

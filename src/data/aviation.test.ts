@@ -69,7 +69,25 @@ test('tidak ada keadaan yang memakai nama warna resmi sebagai kata besarnya', ()
       !terlarang.includes(status.name),
       `kata besar "${status.name}" meniru aviation colour code resmi`,
     )
+    // Jawaban di layar Status tunduk pada aturan yang sama.
+    const kata = status.verdict.toUpperCase().replace(/[^A-Z ]/g, '').split(' ')
+    assert.ok(
+      !kata.some((k) => terlarang.includes(k)),
+      `jawaban "${status.verdict}" meniru aviation colour code resmi`,
+    )
   }
+})
+
+test('setiap keadaan punya jawaban yang berbeda', () => {
+  const verdicts = [
+    resolveAviationStatus(null, 'Sinabung'),
+    resolveAviationStatus([], 'Sinabung'),
+    resolveAviationStatus([advisory(false)], 'Sinabung'),
+    resolveAviationStatus([advisory(true)], 'Sinabung'),
+  ].map((s) => s.verdict)
+  assert.equal(new Set(verdicts).size, 4)
+  // Sumber yang gagal dibaca tidak boleh terdengar seperti keadaan aman.
+  assert.notEqual(resolveAviationStatus(null, 'Sinabung').verdict, 'Bersih.')
 })
 
 test('peringatan yang jendelanya sudah lewat tidak menaikkan status', () => {

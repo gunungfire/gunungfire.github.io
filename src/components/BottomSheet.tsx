@@ -3,8 +3,11 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 /** Di bawah lebar ini lembar geser menempel di bawah; di atasnya jadi panel kiri. */
 export const WIDE_PX = 1000
 
-/** Sisa layar di atas lembar saat dibuka penuh, supaya peta tetap terlihat. */
-const TOP_GAP = 76
+/**
+ * Sisa layar di atas lembar saat dibuka penuh, bila induk belum mengukur
+ * kepala halaman.
+ */
+const DEFAULT_TOP_GAP = 76
 
 export interface SheetMetrics {
   /** Tinggi lembar sekarang, dipakai peta untuk menghitung ruang yang tertutup. */
@@ -30,15 +33,19 @@ interface Props {
    * penanda ini berubah — bukan setiap kali induknya menggambar ulang.
    */
   scrollKey: string
+  /**
+   * Jarak dari atas layar ke tepi atas lembar saat penuh. Diukur dari kepala
+   * halaman yang mengapung: dengan angka tetap, kepala yang lebih tinggi —
+   * misalnya karena cakrawala gunung — menutupi tab di puncak lembar.
+   */
+  topGap?: number
   children: ReactNode
 }
 
-function snapPointsFor(viewportH: number): [number, number, number] {
-  return [
-    Math.min(348, Math.round(viewportH * 0.44)),
-    Math.round(viewportH * 0.58),
-    viewportH - TOP_GAP,
-  ]
+function snapPointsFor(viewportH: number, topGap: number): [number, number, number] {
+  const full = viewportH - topGap
+  const mid = Math.min(Math.round(viewportH * 0.58), full)
+  return [Math.min(348, Math.round(viewportH * 0.44), mid), mid, full]
 }
 
 function panelWidthFor(viewportW: number): number {
@@ -61,6 +68,7 @@ export function BottomSheet({
   onSnapChange,
   header,
   scrollKey,
+  topGap = DEFAULT_TOP_GAP,
   children,
 }: Props) {
   const [viewport, setViewport] = useState(() => ({
@@ -87,7 +95,7 @@ export function BottomSheet({
   )
 
   const wide = viewport.w >= WIDE_PX
-  const snaps = snapPointsFor(viewport.h)
+  const snaps = snapPointsFor(viewport.h, topGap)
   const height = snaps[snap]
   const panelWidth = wide ? panelWidthFor(viewport.w) : 0
 
@@ -98,14 +106,19 @@ export function BottomSheet({
   /**
    * Tinggi selama ditarik dipasang langsung ke DOM, tidak lewat state React.
    * Lewat state, satu gerakan jari menggambar ulang seluruh pohon komponen
-   * puluhan kali per detik — di ponsel itu terasa tersendat. Kendali peta ikut
-   * bergerak lewat `--sheet-h` di kerangka app.
+   * puluhan kali per detik — di ponsel itu terasa tersendat.
+   *
+   * Yang ikut bergerak — kendali peta, skala, atribusi — ditandai
+   * `data-sheet-follow` dan menerima `--sheet-h` sendiri-sendiri. Memasangnya
+   * di kerangka app memaksa peramban menghitung ulang gaya seluruh isi lembar
+   * tiap frame, karena variabel CSS diwariskan ke semua turunan: diukur dengan
+   * CPU diperlambat 4x, itu menurunkan tarikan dari 60 ke 50 fps.
    */
-  const applyHeight = useCallback((h: number) => {
+  const applyHeight = useCallback((h: number, followers: readonly HTMLElement[]) => {
     const el = elRef.current
     if (!el) return
     el.style.height = `${h}px`
-    el.parentElement?.style.setProperty('--sheet-h', `${h}px`)
+    for (const f of followers) f.style.setProperty('--sheet-h', `${h}px`)
   }, [])
 
   const onPointerDown = useCallback(
@@ -115,6 +128,9 @@ export function BottomSheet({
       const startY = e.clientY
       const startH = height
       let latest = startH
+      const followers = Array.from(
+        shell?.querySelectorAll<HTMLElement>('[data-sheet-follow]') ?? [],
+      )
       movedRef.current = false
       // Selama ditarik lembar harus mengikuti jari persis, bukan mengejarnya
       // lewat transisi.
@@ -129,7 +145,7 @@ export function BottomSheet({
         if (rafRef.current) return
         rafRef.current = requestAnimationFrame(() => {
           rafRef.current = 0
-          applyHeight(latest)
+          applyHeight(latest, followers)
         })
       }
       const up = () => {
@@ -154,8 +170,14 @@ export function BottomSheet({
         // React tidak menyentuh tinggi bila nilai gayanya tidak berubah, jadi
         // saat tarikan berakhir di jepret yang sama, posisi akhirnya harus
         // dipasang sendiri.
-        applyHeight(snaps[best])
+        applyHeight(snaps[best], followers)
         onSnapChange(best)
+        // Sesudah React memasang tinggi jepret di kerangka app, nilai pinjaman
+        // dilepas supaya pengikut kembali mewarisinya — nilainya sama, jadi
+        // tidak ada yang bergeser.
+        requestAnimationFrame(() => {
+          for (const f of followers) f.style.removeProperty('--sheet-h')
+        })
       }
       window.addEventListener('pointermove', move)
       window.addEventListener('pointerup', up)

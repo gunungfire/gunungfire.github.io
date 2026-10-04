@@ -16,6 +16,11 @@ export interface AviationStatus {
   id: AviationStateId
   /** Kata besar di kartu, sengaja bukan nama warna resmi. */
   name: string
+  /**
+   * Jawaban satu-dua kata di layar Status, dibaca bersama judulnya "Abu di
+   * jalur terbang". Sama seperti `name`, sengaja bukan nama warna resmi.
+   */
+  verdict: string
   /** Keterangan pendek di samping kata besar. */
   short: string
   /** Apa yang sebenarnya dibaca, satu kalimat. */
@@ -62,6 +67,7 @@ export function resolveAviationStatus(
     return {
       id: 'unknown',
       name: 'BELUM DIKETAHUI',
+      verdict: 'Tak terbaca.',
       short: 'sumber tidak terbaca',
       headline:
         'Peringatan abu penerbangan belum bisa dimuat, jadi app ini tidak tahu apakah sedang ada abu di jalur terbang.',
@@ -79,6 +85,7 @@ export function resolveAviationStatus(
     return {
       id: 'active',
       name: 'ABU AKTIF',
+      verdict: 'Ada abu.',
       short: 'peringatan menyebut gunung ini',
       headline: `Otoritas penerbangan mengeluarkan ${named.length === 1 ? 'satu peringatan' : `${named.length} peringatan`} abu vulkanik yang menyebut ${volcanoName}.`,
       plain:
@@ -94,10 +101,11 @@ export function resolveAviationStatus(
     return {
       id: 'nearby',
       name: 'ABU DI SEKITAR',
+      verdict: 'Abu di sekitar.',
       short: 'peringatan tidak menyebut gunung ini',
       headline: `Ada ${advisories.length} peringatan abu vulkanik di wilayah udara sekitar, tetapi tidak satu pun menyebut ${volcanoName}. Bisa jadi milik gunung tetangga.`,
       plain:
-        'Belum tentu berhubungan dengan gunung ini. Baca teks peringatannya di tab Udara sebelum mengambil kesimpulan.',
+        'Belum tentu berhubungan dengan gunung ini. Baca teks peringatannya di Info sebelum mengambil kesimpulan.',
       action: 'Baca teks peringatannya sebelum bertindak',
       urgent: false,
       strip: '',
@@ -108,6 +116,7 @@ export function resolveAviationStatus(
   return {
     id: 'clear',
     name: 'TIDAK ADA ABU',
+    verdict: 'Bersih.',
     short: 'tidak ada peringatan aktif',
     headline: `Tidak ada peringatan abu vulkanik aktif untuk wilayah udara ${volcanoName}.`,
     plain:

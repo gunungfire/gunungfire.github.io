@@ -1,7 +1,10 @@
+import type { Ref } from 'react'
 import type { DataStateView } from '../data/dataState'
+import type { RidgeItem } from '../data/ridge'
 import type { ThemeId } from '../hooks/useTheme'
 import { formatNumber } from '../lib/format'
 import type { VolcanoRef } from '../types'
+import { Ridge } from './Ridge'
 
 interface Props {
   volcano: VolcanoRef
@@ -10,6 +13,10 @@ interface Props {
   onPickVolcano: () => void
   tema: ThemeId
   onToggleTheme: () => void
+  ridge: RidgeItem[]
+  onSelectVolcano: (id: string) => void
+  /** Kartunya diukur induk: tingginya menentukan letak banner dan lembar penuh. */
+  cardRef: Ref<HTMLDivElement>
 }
 
 /**
@@ -25,50 +32,56 @@ export function FloatingHeader({
   onPickVolcano,
   tema,
   onToggleTheme,
+  ridge,
+  onSelectVolcano,
+  cardRef,
 }: Props) {
   const keTerang = tema === 'gelap'
   return (
     <header className="fhead">
-      <div className="fhead__card">
-        <span className="fhead__dot" aria-hidden="true" />
-        <button
-          type="button"
-          className="fhead__id"
-          onClick={onPickVolcano}
-          aria-label={`Gunung dipantau: ${volcano.name}. Ketuk untuk memilih gunung lain.`}
-        >
-          <span className="fhead__name">
-            {volcano.name}
-            <span className="fhead__caret" aria-hidden="true" />
-          </span>
-          <span className="fhead__meta">
-            {volcano.region} · {formatNumber(volcano.elevationM)} m ·{' '}
-            {dataState.sub}
-          </span>
-        </button>
-        <button
-          type="button"
-          className="fhead__sync"
-          onClick={onRefresh}
-          aria-label={`Kondisi data: ${dataState.label}. Ketuk untuk memuat ulang.`}
-        >
-          <span className="chip">
-            <span className="chip__dot" aria-hidden="true" />
-            <span className="chip__label mono">{dataState.label}</span>
-          </span>
-        </button>
-        <button
-          type="button"
-          className="fhead__tema"
-          onClick={onToggleTheme}
-          aria-pressed={!keTerang}
-          aria-label={
-            keTerang ? 'Ganti ke tampilan terang' : 'Ganti ke tampilan gelap'
-          }
-          title={keTerang ? 'Tampilan terang' : 'Tampilan gelap'}
-        >
-          {keTerang ? <IkonMatahari /> : <IkonBulan />}
-        </button>
+      <div className="fhead__card" ref={cardRef}>
+        <div className="fhead__row">
+          <span className="fhead__dot" aria-hidden="true" />
+          <button
+            type="button"
+            className="fhead__id"
+            onClick={onPickVolcano}
+            aria-label={`Gunung dipantau: ${volcano.name}. Ketuk untuk memilih gunung lain.`}
+          >
+            <span className="fhead__name">
+              {volcano.name}
+              <span className="fhead__caret" aria-hidden="true" />
+            </span>
+            <span className="fhead__meta">
+              {volcano.region} · {formatNumber(volcano.elevationM)} m ·{' '}
+              {dataState.sub}
+            </span>
+          </button>
+          <button
+            type="button"
+            className="fhead__sync"
+            onClick={onRefresh}
+            aria-label={`Kondisi data: ${dataState.label}. Ketuk untuk memuat ulang.`}
+          >
+            <span className="chip">
+              <span className="chip__dot" aria-hidden="true" />
+              <span className="chip__label mono">{dataState.label}</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            className="fhead__tema"
+            onClick={onToggleTheme}
+            aria-pressed={!keTerang}
+            aria-label={
+              keTerang ? 'Ganti ke tampilan terang' : 'Ganti ke tampilan gelap'
+            }
+            title={keTerang ? 'Tampilan terang' : 'Tampilan gelap'}
+          >
+            {keTerang ? <IkonMatahari /> : <IkonBulan />}
+          </button>
+        </div>
+        <Ridge items={ridge} selectedId={volcano.id} onSelect={onSelectVolcano} />
       </div>
     </header>
   )

@@ -110,6 +110,20 @@
   --c-neutral: #94a3b8;
   --c-model: #c084fc;
   --c-sea: #38bdf8;
+
+  /*
+   * Penampang: langit, batuan, dan garis A–B yang juga digambar di peta.
+   * Teks di atas batuan (--c-on-rock-2) 5,9:1; garis A–B sengaja biru supaya
+   * tidak pernah tertukar dengan warna keadaan bahaya.
+   */
+  --c-sky: #0a1422;
+  --c-rock: #1b2430;
+  --c-rock-rim: rgba(233, 237, 242, 0.28);
+  --c-rock-dim: rgba(150, 165, 182, 0.34);
+  --c-on-rock: #e9edf2;
+  --c-on-rock-2: #95a0ae;
+  --c-hot: #f87171;
+  --c-section: #7aa2ff;
   --c-link: #7dd3fc;
   --c-link-hover: #bae6fd;
   --c-on-accent: #0b0b0b;
@@ -186,6 +200,14 @@
   --c-neutral: #475467;
   --c-model: #7e22ce;
   --c-sea: #0369a1;
+  --c-sky: #dbe5f0;
+  --c-rock: #27303a;
+  --c-rock-rim: rgba(255, 255, 255, 0);
+  --c-rock-dim: rgba(39, 48, 58, 0.36);
+  --c-on-rock: #eef2f6;
+  --c-on-rock-2: #aeb8c4;
+  --c-hot: #ff7b6b;
+  --c-section: #1d4ed8;
   --c-link: #0b5cab;
   --c-link-hover: #063f78;
   /* Aksen jadi gelap di tema ini, jadi teks di atasnya jadi putih. */
@@ -384,9 +406,7 @@ button {
 }
 
 .fhead__card {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
+  display: block;
   background: var(--c-float);
   border: 1px solid var(--c-line);
   border-radius: var(--r-lg);
@@ -492,7 +512,9 @@ button {
 
 .app__banners {
   position: absolute;
-  top: calc(var(--s-3) + 56px + env(safe-area-inset-top));
+  /* Di bawah kepala halaman yang terukur, bukan di bawah tinggi tebakan:
+     kepala kini memuat cakrawala gunung. */
+  top: calc(var(--head-h, 68px) + var(--s-2));
   left: var(--s-3);
   right: var(--s-3);
   z-index: 19;
@@ -622,6 +644,9 @@ button {
 }
 
 .sheetpanel__scroll {
+  /* Padding samping lembar sebagai variabel: bagian selebar lembar — langit
+     dan batuan penampang — memakai nilai yang sama untuk keluar ke tepi. */
+  --sheet-pad: var(--s-3);
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -631,7 +656,7 @@ button {
   /* Tinggi lembar berubah tiap frame saat ditarik; ini menahan perhitungan
      tata letak dan cat ulang tetap di dalam kotak gulir. */
   contain: layout paint;
-  padding: 0 var(--s-3) 28px;
+  padding: 0 var(--sheet-pad) 28px;
   padding-bottom: calc(28px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
@@ -2564,7 +2589,8 @@ a.row__tel:hover {
 @media (min-width: 700px) {
 
   .sheetpanel__scroll {
-    padding: 0 var(--s-5) 32px;
+    --sheet-pad: var(--s-5);
+    padding: 0 var(--sheet-pad) 32px;
   }
 
   .snav {
@@ -2594,8 +2620,8 @@ a.row__tel:hover {
     border-right: 1px solid var(--c-line);
     border-radius: 0;
     box-shadow: 0 0 44px var(--sh-3);
-    /* Ruang untuk kepala mengapung yang melayang di atasnya. */
-    padding-top: 66px;
+    /* Ruang untuk kepala mengapung yang melayang di atasnya, terukur. */
+    padding-top: calc(var(--head-h, 66px) + var(--s-2));
     transition: none;
   }
 
@@ -2627,7 +2653,8 @@ a.row__tel:hover {
   }
 
   .sheetpanel__scroll {
-    padding: 0 var(--s-4) 32px;
+    --sheet-pad: var(--s-4);
+    padding: 0 var(--sheet-pad) 32px;
   }
 
   .snav {
@@ -3144,156 +3171,6 @@ a.row__tel:hover {
 }
 
 
-/* ---------- ringkasan empat angka ---------- */
-
-.sumstrip {
-  /* Satu panel instrumen, bukan empat kartu lepas: sel dipisah garis rambut
-     seperti muka alat ukur. Empat kartu bulat dulu terbaca sebagai empat hal
-     yang setara dan tak berhubungan; ini satu bacaan keadaan. */
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  margin-top: 16px;
-  border: 1px solid var(--c-line);
-  border-radius: var(--r-md);
-  background: var(--c-card);
-  overflow: hidden;
-}
-
-.sumtile {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding: 12px 14px 13px 16px;
-  text-align: left;
-  min-width: 0;
-  border-right: 1px solid var(--c-line);
-  border-bottom: 1px solid var(--c-line);
-}
-
-.sumtile:nth-child(2n) {
-  border-right: 0;
-}
-
-.sumtile:nth-last-child(-n + 2) {
-  border-bottom: 0;
-}
-
-/* Garis kanal: warnanya warna keadaan angka itu, abu-abu bila belum terbaca. */
-.sumtile::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 14px;
-  bottom: 14px;
-  width: 3px;
-  border-radius: 0 2px 2px 0;
-  background: var(--ch, var(--c-line-2));
-}
-
-.sumtile--tap {
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.sumtile--tap:hover {
-  background: var(--c-hairline);
-}
-
-.sumtile__k {
-  font-family: var(--f-mono);
-  font-size: var(--t-3xs);
-  font-weight: 500;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--c-text-3);
-  line-height: 1.3;
-}
-
-.sumtile__v {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 2px 6px;
-  font-family: var(--f-display);
-  font-size: var(--t-xl);
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.005em;
-  font-variant-numeric: tabular-nums;
-  color: var(--c-text);
-  margin-top: 2px;
-}
-
-.sumtile__v .samptag {
-  margin-left: 0;
-  font-family: var(--f-sans);
-}
-
-.sumtile__u {
-  font-size: var(--t-3xs);
-  color: var(--c-text-4);
-  line-height: 1.35;
-}
-
-/*
- * Tablet: lembar masih selebar layar, jadi keempat angka muat sebaris.
- * Aturan ini harus ditulis SESUDAH aturan dasar .sumstrip di atas. Dulu ia
- * berada di blok @media tablet yang letaknya ratusan baris lebih awal, dan
- * aturan dasar yang belakangan — spesifisitasnya sama — selalu menimpanya:
- * empat kolom untuk tablet tidak pernah berlaku sekali pun.
- *
- * Mulai 1000 px lembar berubah jadi panel samping selebar ±420 px, dan di
- * sana 2 x 2 memang lebih pas, jadi rentangnya dibatasi.
- */
-@media (min-width: 700px) and (max-width: 999px) {
-  .sumstrip {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .sumtile,
-  .sumtile:nth-child(2n),
-  .sumtile:nth-last-child(-n + 2) {
-    border-right: 1px solid var(--c-line);
-    border-bottom: 0;
-  }
-
-  .sumtile:last-child {
-    border-right: 0;
-  }
-}
-
-/* ---------- jejak seismogram ---------- */
-
-.strace {
-  display: block;
-  width: 100%;
-  height: 26px;
-  margin-top: 6px;
-  overflow: visible;
-}
-
-.strace__base {
-  stroke: var(--c-line-2);
-  stroke-width: 1;
-  vector-effect: non-scaling-stroke;
-}
-
-.strace__line {
-  fill: none;
-  stroke: var(--lv);
-  stroke-width: 1.4;
-  stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
-}
-
-/* Data contoh digambar putus-putus dan abu-abu: bentuknya masih terlihat,
-   tapi tidak mungkin tertukar dengan rekaman sungguhan. */
-.strace--sample .strace__line {
-  stroke: var(--c-text-4);
-  stroke-dasharray: 3 3;
-}
-
 /* ---------- kontur ---------- */
 
 .contours {
@@ -3517,27 +3394,6 @@ a.row__tel:hover {
   padding: 6px 10px;
   flex: none;
 }
-.strip {
-  background: var(--lv);
-  color: var(--c-on-accent);
-  padding: 10px 16px;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
-.strip__tag {
-  font-size: var(--t-3xs);
-  font-weight: 600;
-  background: var(--sh-1);
-  border-radius: var(--r-xs);
-  padding: 2px 5px;
-  flex: none;
-}
-.strip__text {
-  font-size: var(--t-xs);
-  font-weight: 600;
-  line-height: 1.35;
-}
 .sigmet {
   border: 1px solid color-mix(in srgb, var(--c-alert) 32%, transparent);
   border-radius: var(--r-lg);
@@ -3617,8 +3473,8 @@ a.row__tel:hover {
   line-height: 1.5;
 }
 
-/* Banner dan pita peringatan kini mengapung di atas peta, bukan mengalir di
-   dalam halaman: latarnya dirapatkan supaya tetap terbaca di atas petak peta. */
+/* Banner kini mengapung di atas peta, bukan mengalir di dalam halaman:
+   latarnya dirapatkan supaya tetap terbaca di atas petak peta. */
 
 .banner {
   margin: 0;
@@ -3626,31 +3482,6 @@ a.row__tel:hover {
   border: 1px solid var(--ds-line);
   padding: 10px var(--s-3);
   backdrop-filter: blur(10px);
-}
-
-.strip {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 9px var(--s-3);
-  background: var(--lv);
-  color: var(--c-on-accent);
-}
-
-.strip__tag {
-  flex: none;
-  font-size: var(--t-3xs);
-  font-weight: 600;
-  background: var(--sh-1);
-  border-radius: var(--r-xs);
-  padding: 2px 5px;
-}
-
-.strip__text {
-  font-size: var(--t-2xs);
-  font-weight: 600;
-  line-height: 1.35;
 }
 
 /* Kabar versi baru app bukan kabar bahaya. Banner kondisi data memakai warna
@@ -3697,4 +3528,705 @@ a.row__tel:hover {
   font-weight: 500;
   color: var(--c-text-4);
   font-variant-numeric: tabular-nums;
+}
+
+/* ---------- kepala: baris identitas + cakrawala gunung ---------- */
+
+.fhead__row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.ridge {
+  margin-top: 6px;
+  border-top: 1px solid var(--c-line);
+  padding-top: 4px;
+}
+
+.ridge__track {
+  position: relative;
+}
+
+.ridge__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+/* Mulai enam gunung baris ini digeser. Sengaja tanpa mask-image untuk
+   memudarkan tepi: masker dicat ulang tiap frame gulir dan terasa berat di
+   ponsel murah. Penghitung "n abu" di tepi yang memberi tahu ada apa di luar. */
+.ridge--scroll .ridge__list {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ridge--scroll .ridge__list::-webkit-scrollbar {
+  display: none;
+}
+
+.ridge--scroll .ridge__item {
+  flex: 0 0 64px;
+  scroll-snap-align: center;
+}
+
+.ridge__item {
+  min-width: 0;
+}
+
+.ridge__v {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 1px 2px;
+  border-radius: var(--r-sm);
+  color: var(--c-text-3);
+  transition: background-color 0.15s ease;
+}
+
+.ridge__v:hover {
+  background: var(--c-veil);
+}
+
+.ridge__svg {
+  display: block;
+  width: 100%;
+  height: 36px;
+  overflow: visible;
+}
+
+.ridge__cone {
+  fill: var(--c-text-4);
+  opacity: 0.55;
+  transition: opacity 0.15s ease, fill 0.15s ease;
+}
+
+.ridge__v[aria-pressed='true'] .ridge__cone {
+  fill: var(--c-text);
+  opacity: 1;
+}
+
+.ridge__v--abu .ridge__cone {
+  opacity: 0.8;
+}
+
+.ridge__puff {
+  fill: color-mix(in srgb, var(--c-danger) 26%, transparent);
+  stroke: var(--c-danger);
+  stroke-width: 1.2;
+}
+
+.ridge__v--tak .ridge__cone {
+  fill: none;
+  stroke: var(--c-text-4);
+  stroke-width: 1.2;
+  stroke-dasharray: 2 2;
+  opacity: 1;
+}
+
+.ridge__v--tak[aria-pressed='true'] .ridge__cone {
+  stroke: var(--c-text);
+}
+
+.ridge__ground {
+  stroke: var(--c-line-2);
+  stroke-width: 1;
+}
+
+.ridge__n {
+  font-family: var(--f-mono);
+  font-size: var(--t-3xs);
+  line-height: 1.2;
+  max-width: 62px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ridge__v[aria-pressed='true'] .ridge__n {
+  color: var(--c-text);
+  font-weight: 600;
+}
+
+.ridge__v--abu .ridge__n {
+  color: var(--c-danger);
+}
+
+.ridge__foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.ridge__edge {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: var(--r-pill);
+  border: 1px solid color-mix(in srgb, var(--c-danger) 45%, transparent);
+  color: var(--c-danger);
+  font-family: var(--f-mono);
+  font-size: var(--t-3xs);
+  font-weight: 600;
+}
+
+.ridge__foot .ridge__edge:last-child {
+  margin-left: auto;
+}
+
+.ridge__sum {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--t-3xs);
+  color: var(--c-text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Status: jawaban di langit penampang ---------- */
+
+/* Langit, batuan, dan seismogram selebar lembar: keluar dari padding gulir. */
+.stview {
+  margin-inline: calc(-1 * var(--sheet-pad));
+}
+
+.stview__pad {
+  margin: var(--s-3) var(--sheet-pad) 0;
+}
+
+.stsky {
+  background: linear-gradient(180deg, var(--c-shell) 0%, var(--c-sky) 34%, var(--c-sky) 100%);
+}
+
+.stsky--active {
+  background: linear-gradient(
+    180deg,
+    var(--c-shell) 0%,
+    color-mix(in srgb, var(--c-danger) 22%, var(--c-sky)) 34%,
+    color-mix(in srgb, var(--c-danger) 8%, var(--c-sky)) 100%
+  );
+}
+
+.stsky--nearby {
+  background: linear-gradient(
+    180deg,
+    var(--c-shell) 0%,
+    color-mix(in srgb, var(--c-watch) 14%, var(--c-sky)) 34%,
+    var(--c-sky) 100%
+  );
+}
+
+.stsky--unknown {
+  background: linear-gradient(180deg, var(--c-shell) 0%, var(--c-sunken) 34%, var(--c-sunken) 100%);
+}
+
+.verdict {
+  padding: 14px var(--sheet-pad) 0;
+}
+
+.verdict__k {
+  font-family: var(--f-mono);
+  font-size: var(--t-3xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--c-text-2);
+}
+
+.verdict__v {
+  margin: 4px 0 0;
+  font-family: var(--f-display);
+  font-weight: 700;
+  font-size: clamp(44px, 13vw, 58px);
+  line-height: 0.92;
+  letter-spacing: -0.01em;
+}
+
+.verdict__lede {
+  margin: 8px 0 0;
+  max-width: 36ch;
+  font-size: var(--t-sm);
+  line-height: 1.4;
+  color: var(--c-text);
+}
+
+.verdict__stale {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 3px 8px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--c-line-2);
+  font-family: var(--f-mono);
+  font-size: var(--t-3xs);
+  color: var(--c-text-2);
+}
+
+/* ---------- penampang A → B ---------- */
+
+.xsec {
+  margin: 14px 0 0;
+}
+
+.xsec__cap {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding: 0 var(--sheet-pad);
+  font-family: var(--f-mono);
+  font-size: var(--t-3xs);
+  color: var(--c-text-2);
+}
+
+.xsec__cap b {
+  color: var(--c-section);
+  font-weight: 600;
+}
+
+.xsec__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.xsec__fl {
+  stroke: var(--c-line-2);
+  stroke-dasharray: 2 4;
+}
+
+.xsec__flt,
+.xsec__note {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  fill: var(--c-text-2);
+}
+
+/* Semua label di langit bisa jatuh di atas arsiran abu; halo warna lembar
+   menjaganya tetap terbaca tanpa kotak latar. */
+.xsec__flt,
+.xsec__note,
+.xsec__summit,
+.xsec__ab,
+.xsec__asht,
+.xsec__met {
+  paint-order: stroke;
+  stroke: var(--c-shell);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+.xsec__hatch {
+  stroke: var(--c-danger);
+  stroke-width: 1.4;
+}
+
+.xsec__ash {
+  fill: url(#xsec-hatch);
+  stroke: var(--c-danger);
+  stroke-width: 1;
+}
+
+.xsec__asht,
+.xsec__met {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  font-weight: 500;
+  fill: var(--c-text);
+}
+
+.xsec__ground {
+  fill: var(--c-rock);
+}
+
+.xsec__zone {
+  fill: var(--c-danger);
+}
+
+.xsec__mtn {
+  fill: var(--c-rock);
+  stroke: var(--c-rock-rim);
+  stroke-width: 1;
+}
+
+.xsec__tick {
+  stroke: var(--c-text-2);
+}
+
+.xsec__summit {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  fill: var(--c-text);
+}
+
+.xsec__ab {
+  font-family: var(--f-display);
+  font-size: 14px;
+  font-weight: 700;
+  fill: var(--c-section);
+}
+
+.xsec__axis {
+  stroke: var(--c-on-rock-2);
+}
+
+.xsec__kmt {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  fill: var(--c-on-rock-2);
+}
+
+.xsec__mehead {
+  fill: var(--c-text);
+}
+
+.xsec__mebody {
+  fill: none;
+  stroke: var(--c-text);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.xsec__me[data-zone='in'] .xsec__mehead {
+  fill: var(--c-danger);
+}
+
+.xsec__me[data-zone='in'] .xsec__mebody {
+  stroke: var(--c-danger);
+}
+
+.xsec__me[data-zone='off'] .xsec__mehead {
+  fill: none;
+  stroke: var(--c-text-2);
+  stroke-width: 1.4;
+  stroke-dasharray: 2 2;
+}
+
+.xsec__me[data-zone='off'] .xsec__mebody {
+  stroke: var(--c-text-2);
+  stroke-width: 1.4;
+  stroke-dasharray: 2 2;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .xsec__me[data-zone='off'] {
+    animation: ghost 2.4s ease-in-out infinite;
+  }
+}
+
+@keyframes ghost {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* ---------- seismogram 24 jam ---------- */
+
+.seisstrip {
+  background: var(--c-rock);
+  color: var(--c-on-rock);
+  padding: 0 0 10px;
+}
+
+.seisstrip__svg {
+  display: block;
+  width: 100%;
+  height: 46px;
+  /* Geser mendatar untuk membaca jam per jam, tapi gulir tegak lembar tetap
+     milik peramban. */
+  touch-action: pan-y;
+  cursor: crosshair;
+}
+
+.seisstrip__base {
+  stroke: var(--c-on-rock-2);
+  opacity: 0.35;
+  vector-effect: non-scaling-stroke;
+}
+
+.seisstrip__line {
+  fill: none;
+  stroke: var(--c-on-rock);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.stview--active .seisstrip__line {
+  stroke: var(--c-hot);
+}
+
+.seisstrip--sample .seisstrip__line {
+  stroke: var(--c-on-rock-2);
+  stroke-dasharray: 3 3;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .seisstrip__line--draw {
+    stroke-dasharray: 1;
+    animation: seis-draw 1.4s cubic-bezier(0.32, 0.72, 0, 1) both;
+  }
+}
+
+@keyframes seis-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.seisstrip__cursor {
+  stroke: var(--c-on-rock);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.seisstrip__now {
+  fill: var(--c-on-rock);
+}
+
+.seisstrip__axis {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding: 2px var(--sheet-pad) 0;
+  font-family: var(--f-mono);
+  font-size: var(--t-3xs);
+  color: var(--c-on-rock-2);
+}
+
+.seisstrip__axis b {
+  color: var(--c-on-rock);
+  font-weight: 500;
+}
+
+/* ---------- tiga angka ---------- */
+
+.qfacts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-bottom: 1px solid var(--c-line);
+}
+
+.qfact {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  padding: 14px 10px 14px var(--sheet-pad);
+  text-align: left;
+}
+
+.qfact + .qfact {
+  border-left: 1px solid var(--c-line);
+  padding-left: 12px;
+}
+
+.qfact--tap {
+  transition: background-color 0.15s ease;
+}
+
+.qfact--tap:hover {
+  background: var(--c-hairline);
+}
+
+.qfact__k {
+  font-family: var(--f-mono);
+  font-size: var(--t-3xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-text-3);
+}
+
+.qfact__v {
+  font-family: var(--f-display);
+  font-size: var(--t-xl);
+  font-weight: 700;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  color: var(--c-text);
+}
+
+.qfact__v small {
+  margin-left: 2px;
+  font-size: var(--t-sm);
+  font-weight: 600;
+}
+
+.qfact__v--none {
+  color: var(--c-text-3);
+}
+
+.qfact__n {
+  max-width: 100%;
+  font-size: var(--t-2xs);
+  color: var(--c-text-2);
+  line-height: 1.3;
+}
+
+.qfact__act {
+  min-height: var(--tap);
+  font-size: var(--t-2xs);
+  font-weight: 600;
+  color: var(--c-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-align: left;
+}
+
+/* ---------- satu tindakan ---------- */
+
+.stact {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px var(--sheet-pad) 4px;
+}
+
+.stact__btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: 52px;
+  padding: 0 var(--s-4);
+  border-radius: var(--r-md);
+  background: var(--c-text);
+  color: var(--c-shell);
+  font-size: var(--t-md);
+  font-weight: 600;
+  text-align: left;
+}
+
+.stact__btn--active {
+  background: var(--c-danger);
+  color: var(--c-on-accent);
+}
+
+.stact__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.stact__steps li {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 8px;
+  font-size: var(--t-sm);
+  line-height: 1.45;
+  color: var(--c-text);
+}
+
+.stact__steps .mono {
+  font-size: var(--t-2xs);
+  color: var(--c-text-3);
+  padding-top: 2px;
+}
+
+.stact__more {
+  align-self: flex-start;
+  min-height: var(--tap);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--c-text-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.stact__more:hover {
+  color: var(--c-text);
+}
+
+/* ---------- Info: bagian terlipat ---------- */
+
+.infoview {
+  padding-top: 6px;
+}
+
+.isec {
+  border-bottom: 1px solid var(--c-line);
+  scroll-margin-top: var(--s-2);
+}
+
+.isec__h {
+  margin: 0;
+  font: inherit;
+}
+
+.isec__btn {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 16px;
+  align-items: center;
+  column-gap: var(--s-3);
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 0;
+  text-align: left;
+}
+
+.isec__t {
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--c-text);
+}
+
+.isec__a {
+  grid-column: 1;
+  font-size: var(--t-xs);
+  color: var(--c-text-2);
+  line-height: 1.35;
+}
+
+.isec__chev {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  justify-self: center;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--c-text-3);
+  border-bottom: 2px solid var(--c-text-3);
+  transform: rotate(-45deg);
+  transition: transform 0.18s ease;
+}
+
+.isec--open .isec__chev {
+  transform: rotate(45deg);
+}
+
+.isec__body {
+  padding-bottom: 18px;
+}
+
+/* ---------- penanda A dan B di peta ---------- */
+
+.secpin {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--c-section);
+  color: var(--c-shell);
+  font-family: var(--f-display);
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 0 0 2px var(--c-page);
 }

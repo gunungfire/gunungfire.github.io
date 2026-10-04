@@ -27,7 +27,7 @@ export function MapControls({
   canFocusUser,
 }: Props) {
   return (
-    <div className="mapctl">
+    <div className="mapctl" data-sheet-follow>
       <div className="mapctl__group" role="group" aria-label="Lapisan peta">
         {layers.map((item) => (
           <button
