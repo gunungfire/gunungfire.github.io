@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { aqiBand, aqiFromPm25 } from './aqi.ts'
+import { AQI_BANDS, aqiBand, aqiFromPm25 } from './aqi.ts'
 
 test('titik patah tabel EPA dipetakan tepat ke batas kategorinya', () => {
   // Kalau interpolasinya meleset, angka di batas kategori akan berpindah
@@ -35,4 +35,12 @@ test('kategori dipilih dari batas atas indeks', () => {
   assert.equal(aqiBand(138).label, 'Tidak sehat bagi kelompok sensitif')
   assert.equal(aqiBand(200).label, 'Tidak sehat')
   assert.equal(aqiBand(301).label, 'Berbahaya')
+})
+
+test('warna setiap kategori adalah token, bukan kode warna mati', () => {
+  // Kode warna mati tidak ikut berganti tema: kuning "Sedang" pernah 1,3:1
+  // di atas putih dan tak terbaca di tema terang.
+  for (const band of AQI_BANDS) {
+    assert.match(band.color, /^var\(--c-[a-z]+\)$/, `${band.label}: ${band.color}`)
+  }
 })

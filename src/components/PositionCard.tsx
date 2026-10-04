@@ -28,9 +28,11 @@ interface Props {
   onShowMap: () => void
 }
 
-const SAFE = '#4ade80'
-const EDGE = '#facc15'
-const DANGER = '#f87171'
+// Token, bukan kode warna: kuning "di batas" #facc15 hanya 1,3:1 di atas
+// putih, jadi vonis paling genting justru tak terbaca di tema terang.
+const SAFE = 'var(--c-safe)'
+const EDGE = 'var(--c-watch)'
+const DANGER = 'var(--c-danger)'
 
 /** Ajakan dan penjelasan singkat untuk keadaan yang belum menghasilkan posisi. */
 function Prompt({
@@ -190,8 +192,10 @@ export function PositionCard({
           type="button"
           className="btn-primary"
           style={{
-            background: verdict === 'di luar' ? 'rgba(255,255,255,.1)' : DANGER,
-            color: verdict === 'di luar' ? '#e9edf2' : '#0b0b0b',
+            // Teks hampir putih di atas selubung putih dulu tak terlihat sama
+            // sekali di tema terang. Token membuatnya ikut berganti.
+            background: verdict === 'di luar' ? 'var(--c-line)' : DANGER,
+            color: verdict === 'di luar' ? 'var(--c-text)' : 'var(--c-on-accent)',
           }}
           onClick={onShowShelters}
         >

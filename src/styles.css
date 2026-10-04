@@ -94,6 +94,9 @@
   --c-watch: #facc15;
   --c-alert: #fb923c;
   --c-danger: #f87171;
+  /* Dua tingkat teratas indeks kualitas udara, mengikuti warna US EPA. */
+  --c-severe: #c084fc;
+  --c-hazard: #fb7185;
   --c-neutral: #94a3b8;
   --c-model: #c084fc;
   --c-sea: #38bdf8;
@@ -157,10 +160,19 @@
   --sh-2: rgba(16, 24, 40, 0.11);
   --sh-3: rgba(16, 24, 40, 0.16);
 
-  --c-safe: #15803d;
-  --c-watch: #a16207;
-  --c-alert: #c2410c;
+  /*
+   * Tiga warna ini dulu lolos di atas putih polos tapi tidak di atas latar
+   * tipisnya sendiri (wash 6–12% di atas #f6f8fb): 4,0–4,5:1. Kartu "TIDAK
+   * ADA ABU" yang hijau, dan setiap gunung berstatus Waspada atau Siaga,
+   * menampilkan teks di bawah ambang AA. Kecerahannya diturunkan seperlunya —
+   * rona dan saturasi tetap — sampai yang terburuk 4,6:1.
+   */
+  --c-safe: #137438;
+  --c-watch: #915806;
+  --c-alert: #b23c0b;
   --c-danger: #b42318;
+  --c-severe: #7e22ce;
+  --c-hazard: #9f1239;
   --c-neutral: #475467;
   --c-model: #7e22ce;
   --c-sea: #0369a1;
@@ -2007,7 +2019,8 @@ button {
 .demo__close {
   font-size: var(--t-2xs);
   color: var(--c-text-3);
-  padding: 2px 4px;
+  padding: 2px 6px;
+  min-height: var(--tap);
   flex: none;
 }
 
@@ -2185,8 +2198,11 @@ a.row__tel:hover {
 }
 
 .poscard__oncta {
+  /* inline-block, bukan inline: span inline mengabaikan margin atas dan
+     padding vertikalnya untuk tata letak, jadi tombol ini dulu digambar
+     menimpa baris terakhir catatan di atasnya ("…ke mana pun."). */
+  display: inline-block;
   margin-top: 11px;
-  align-self: flex-start;
   padding: 9px 14px;
   border-radius: var(--r-md);
   background: var(--c-line);

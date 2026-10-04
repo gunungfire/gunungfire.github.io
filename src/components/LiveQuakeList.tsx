@@ -10,10 +10,10 @@ interface Props {
 
 /** Warna mengikuti level PAGER USGS, satu-satunya penilaian dampak resmi di feed. */
 const ALERT_COLOR: Record<string, string> = {
-  green: '#4ade80',
-  yellow: '#facc15',
-  orange: '#fb923c',
-  red: '#f87171',
+  green: 'var(--c-safe)',
+  yellow: 'var(--c-watch)',
+  orange: 'var(--c-alert)',
+  red: 'var(--c-danger)',
 }
 
 const ALERT_LABEL: Record<string, string> = {

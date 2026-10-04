@@ -29,6 +29,12 @@ export interface AqiBand {
   /** Batas atas indeks untuk kategori ini. */
   max: number
   label: string
+  /**
+   * Selalu token, bukan kode warna. Kuning #facc15 yang jelas di atas latar
+   * gelap hanya 1,3:1 di atas putih — angka "Sedang" pernah tak terbaca sama
+   * sekali di tema terang karena berkas ini terlewat saat warna dipindah ke
+   * token.
+   */
   color: string
   advice: string
 }
@@ -37,42 +43,42 @@ export const AQI_BANDS: AqiBand[] = [
   {
     max: 50,
     label: 'Baik',
-    color: '#4ade80',
+    color: 'var(--c-safe)',
     advice:
       'Udara aman. Tidak perlu pembatasan aktivitas di luar ruangan.',
   },
   {
     max: 100,
     label: 'Sedang',
-    color: '#facc15',
+    color: 'var(--c-watch)',
     advice:
       'Kelompok sensitif sebaiknya mengurangi aktivitas berat di luar ruangan.',
   },
   {
     max: 150,
     label: 'Tidak sehat bagi kelompok sensitif',
-    color: '#fb923c',
+    color: 'var(--c-alert)',
     advice:
       'Anak, lansia, dan penderita asma sebaiknya di dalam ruangan. Pakai masker bila keluar.',
   },
   {
     max: 200,
     label: 'Tidak sehat',
-    color: '#f87171',
+    color: 'var(--c-danger)',
     advice:
       'Kurangi aktivitas di luar ruangan. Pakai masker N95 dan tutup ventilasi rumah.',
   },
   {
     max: 300,
     label: 'Sangat tidak sehat',
-    color: '#c084fc',
+    color: 'var(--c-severe)',
     advice:
       'Tetap di dalam ruangan. Abu vulkanik pada tingkat ini merusak saluran napas.',
   },
   {
     max: 500,
     label: 'Berbahaya',
-    color: '#fb7185',
+    color: 'var(--c-hazard)',
     advice:
       'Seluruh warga berisiko. Jangan keluar rumah kecuali untuk mengungsi, dan pakai masker N95.',
   },
